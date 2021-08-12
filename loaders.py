@@ -12,9 +12,9 @@ class OmniglotDataset(Dataset):
         with open(self.dataset_info, 'r') as f:
             for line in f.readlines():
                 first_img_path, second_img_path, label = line.strip().split("\t")
-                self.img_array.append((torch.Tensor(imread(first_img_path, as_gray=True)),
-                                       torch.Tensor(imread(second_img_path, as_gray=True))))
-                self.label_array.append(int(label))
+                self.img_array.append((torch.Tensor(imread(first_img_path, as_gray=True)).unsqueeze(0),
+                                       torch.Tensor(imread(second_img_path, as_gray=True)).unsqueeze(0)))
+                self.label_array.append(torch.Tensor([int(label)])[0])
 
     def __len__(self):
         return len(self.img_array)
