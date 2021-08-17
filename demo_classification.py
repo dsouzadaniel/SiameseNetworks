@@ -16,7 +16,6 @@ test_data_folder = os.path.join('data', 'all_runs')
 
 pretrained_model = models.SiameseNetworkLightning.load_from_checkpoint(checkpoint_path="pretrained_models")
 
-
 def classification_run(folder, f_load, f_cost, ftype='cost'):
     # Compute error rate for one run of one-shot classification
     #
