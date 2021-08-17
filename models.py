@@ -27,19 +27,20 @@ class SiameseNetwork(nn.Module):
 
         self.dist_metric = nn.L1Loss(reduction='none')
 
+        # Sigmoid Layer is accounted for by BCEWithLogitsLoss for better stability
         self.fc = nn.Sequential(OrderedDict([
             ('LinearFinal', nn.Linear(in_features=4096, out_features=1)),
-            ('SigmoidFinal', nn.Sigmoid()),
         ]))
+
+        # Loss Function
+        self.loss_fn = nn.BCEWithLogitsLoss()
 
     def forward(self, img1, img2):
         first_twin = self.model(img1)
         second_twin = self.model(img2)
-
         feature_vector = self.dist_metric(first_twin, second_twin)
-
-        return self.fc(feature_vector).view(-1)
-
+        output = self.fc(feature_vector).view(-1)
+        return output
 
 class SiameseNetworkLightning(pl.LightningModule):
     def __init__(self):
@@ -62,19 +63,21 @@ class SiameseNetworkLightning(pl.LightningModule):
 
         self.dist_metric = nn.L1Loss(reduction='none')
 
+        # Sigmoid Layer is accounted for by BCEWithLogitsLoss for better stability
         self.fc = nn.Sequential(OrderedDict([
             ('LinearFinal', nn.Linear(in_features=4096, out_features=1)),
-            ('SigmoidFinal', nn.Sigmoid()),
         ]))
 
         # Loss Function
-        self.loss_fn = nn.BCELoss()
+        self.loss_fn = nn.BCEWithLogitsLoss()
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, img1, img2):
         first_twin = self.model(img1)
         second_twin = self.model(img2)
         feature_vector = self.dist_metric(first_twin, second_twin)
-        return self.fc(feature_vector).view(-1)
+        output = self.sigmoid(self.fc(feature_vector)).view(-1).item()
+        return output
 
     def training_step(self, batch, batch_idx):
         (img_1s, img_2s), labels = batch
@@ -103,7 +106,7 @@ class SiameseNetworkLightning(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.SGD(self.parameters(), lr=1e-2)
         return optimizer
 
     def backward(self, loss, optimizer, optimizer_idx):
